@@ -11,5 +11,7 @@ namespace API.Models
         public int Floor { get; set; }
         [Column("capacity")]
         public int Capacity { get; set; }
+        // Kardinalitas ke Booking
+        public ICollection<Booking>? Bookings { get; set; }
     }
 }

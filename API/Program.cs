@@ -1,4 +1,6 @@
+using API.Contracts;
 using API.Data;
+using API.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,6 +8,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<BookingManagementDbContext>(option => option.UseSqlServer(connectionString));
+
+// Menginstance UniversityRepository dan IUniversityRepository
+builder.Services.AddScoped<IUniversityRepository, UniversityRepository>();
 
 // Add services to the container.
 

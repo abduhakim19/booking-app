@@ -23,5 +23,9 @@ namespace API.Models
         public Guid RoomGuid { get; set; }
         [Column("employee_guid")]
         public Guid EmployeeGuid { get; set; }
+
+        public Room? Room { get; set; }
+
+        public Employee? Employee { get; set; }
     }
 }

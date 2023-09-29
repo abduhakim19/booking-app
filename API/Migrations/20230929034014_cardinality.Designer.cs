@@ -4,6 +4,7 @@ using API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace API.Migrations
 {
     [DbContext(typeof(BookingManagementDbContext))]
-    partial class BookingManagementDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230929034014_cardinality")]
+    partial class cardinality
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -60,7 +62,7 @@ namespace API.Migrations
 
                     b.HasKey("Guid");
 
-                    b.ToTable("tb_m_accounts", (string)null);
+                    b.ToTable("tb_m_accounts");
                 });
 
             modelBuilder.Entity("API.Models.AccountRole", b =>
@@ -92,7 +94,7 @@ namespace API.Migrations
 
                     b.HasIndex("RoleGuid");
 
-                    b.ToTable("tb_m_account_roles", (string)null);
+                    b.ToTable("tb_m_account_roles");
                 });
 
             modelBuilder.Entity("API.Models.Booking", b =>
@@ -141,7 +143,7 @@ namespace API.Migrations
 
                     b.HasIndex("RoomGuid");
 
-                    b.ToTable("tb_tr_bookings", (string)null);
+                    b.ToTable("tb_tr_bookings");
                 });
 
             modelBuilder.Entity("API.Models.Education", b =>
@@ -180,7 +182,7 @@ namespace API.Migrations
 
                     b.HasIndex("UniversityGuid");
 
-                    b.ToTable("tb_m_educations", (string)null);
+                    b.ToTable("tb_m_educations");
                 });
 
             modelBuilder.Entity("API.Models.Employee", b =>
@@ -238,7 +240,7 @@ namespace API.Migrations
                     b.HasIndex("Nik", "Email", "PhoneNumber")
                         .IsUnique();
 
-                    b.ToTable("tb_m_employees", (string)null);
+                    b.ToTable("tb_m_employees");
                 });
 
             modelBuilder.Entity("API.Models.Role", b =>
@@ -263,7 +265,7 @@ namespace API.Migrations
 
                     b.HasKey("Guid");
 
-                    b.ToTable("tb_m_roles", (string)null);
+                    b.ToTable("tb_m_roles");
                 });
 
             modelBuilder.Entity("API.Models.Room", b =>
@@ -296,7 +298,7 @@ namespace API.Migrations
 
                     b.HasKey("Guid");
 
-                    b.ToTable("tb_m_rooms", (string)null);
+                    b.ToTable("tb_m_rooms");
                 });
 
             modelBuilder.Entity("API.Models.University", b =>
@@ -326,7 +328,7 @@ namespace API.Migrations
 
                     b.HasKey("Guid");
 
-                    b.ToTable("tb_m_universities", (string)null);
+                    b.ToTable("tb_m_universities");
                 });
 
             modelBuilder.Entity("API.Models.AccountRole", b =>
