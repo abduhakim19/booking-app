@@ -56,9 +56,9 @@ namespace API.Data
 
             // One Employee has One Account
             modelBuilder.Entity<Employee>()
-                        .HasOne(e => e.Account)
+                        .HasOne(a => a.Account)
                         .WithOne(e => e.Employee)
-                        .HasForeignKey<Employee>(e => e.Guid);
+                        .HasForeignKey<Account>(a => a.Guid);
 
             // One Account has many Account Role
             modelBuilder.Entity<Account>()
@@ -71,11 +71,6 @@ namespace API.Data
                         .HasMany(a => a.AccountRoles)
                         .WithOne(r => r.Role)
                         .HasForeignKey(r => r.RoleGuid);
-
-
         }
-
-        
-
     }
 }

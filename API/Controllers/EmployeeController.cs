@@ -60,14 +60,15 @@ namespace API.Controllers
         }
         // Menghapus Data Employee
         [HttpDelete] // http method
-        public IActionResult Delete(Employee employee) 
+        public IActionResult Delete(Guid guid) 
         {
+            var employee = _employeeRepository.GetByGuid(guid);
+            if (employee is null)
+                return NotFound("Id Not Found");
             var result = _employeeRepository.Delete(employee);
-            if (!result) // return result bool true jika berhasil maka memakai negasi untuk gagal
-            {
-                return BadRequest("Failed to delete data"); // 400 dengan pesan
-            }
-            return Ok(result); //200 berhasil
-        }
+            if (!result)
+                return BadRequest("Failed to delete data");
+            return Ok(result);
+        } 
     }
 }

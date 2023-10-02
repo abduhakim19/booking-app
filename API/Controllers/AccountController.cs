@@ -1,6 +1,8 @@
 ﻿using API.Contracts;
 using API.Models;
+using API.Repositories;
 using Microsoft.AspNetCore.Mvc;
+using System;
 
 namespace API.Controllers
 {
@@ -62,13 +64,14 @@ namespace API.Controllers
         }
         // Menghapus Data Account
         [HttpDelete] // http method
-        public IActionResult Delete(Account account)
+        public IActionResult Delete(Guid guid)
         {
+            var account = _accountRepository.GetByGuid(guid);
+            if (account is null)
+                return NotFound("Id Not Found");
             var result = _accountRepository.Delete(account);
             if (!result)  // return result bool true jika berhasil maka memakai negasi untuk gagal
-            {
                 return BadRequest("Failed to delete data"); // 400 dengan pesan
-            }
             return Ok(result); //200 berhasil
         }
     }

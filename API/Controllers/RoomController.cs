@@ -61,13 +61,15 @@ namespace API.Controllers
         }
         // Menghapus Data Room
         [HttpDelete] // http method
-        public IActionResult Delete(Room room) 
+        public IActionResult Delete(Guid guid) 
         { 
+            var room = _roomRepository.GetByGuid(guid);
+            if (room is null)
+                return NotFound("Id Not Found");
             var result = _roomRepository.Delete(room);
             if (!result) // return result bool true jika berhasil maka memakai negasi untuk gagal
-            {
                 return BadRequest("Failed to delete data"); // 400 dengan pesan
-            }
+
             return Ok(result); //200 berhasil
         }
     }

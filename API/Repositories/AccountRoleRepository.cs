@@ -5,7 +5,7 @@ using API.Models;
 namespace API.Repositories
 {   // class AccountRoleRepository inheritance interface IAccountRoleRepository
     // Isi Method sesuai interface
-    public class AccountRoleRepository : IAccountRoleRepository
+    public class AccountRoleRepository : IGeneralRepository<AccountRole> ,IAccountRoleRepository
     {   // properti DbContext
         private readonly BookingManagementDbContext _context;
         //inisialisasi dbcontext (Contsructor)

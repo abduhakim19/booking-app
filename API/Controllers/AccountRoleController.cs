@@ -60,13 +60,14 @@ namespace API.Controllers
         }
         // Menghapus Data AccountRole
         [HttpDelete] // http method
-        public IActionResult Delete(AccountRole accountRole)
+        public IActionResult Delete(Guid guid)
         {
+            var accountRole = _accountRoleRepository.GetByGuid(guid);
+            if (accountRole is null)
+                return NotFound("Id Not Found");
             var result = _accountRoleRepository.Delete(accountRole);
             if (!result) // return result bool true jika berhasil maka memakai negasi untuk gagal
-            {
                 return BadRequest("Failde to delete data");  // 400 dengan pesan
-            }
             return Ok(result); //200 berhasil
         } 
     }

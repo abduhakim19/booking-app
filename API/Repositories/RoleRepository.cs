@@ -6,7 +6,7 @@ namespace API.Repositories
 {
     // class RoleRepository inheritance interface IRoleRepository
     // Isi Method sesuai interface
-    public class RoleRepository : IRoleRepository
+    public class RoleRepository : IGeneralRepository<Role> ,IRoleRepository
     {
         // properti DbContext
         private readonly BookingManagementDbContext _context;

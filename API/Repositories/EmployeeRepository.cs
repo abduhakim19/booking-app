@@ -6,7 +6,7 @@ namespace API.Repositories
 {
     // class EmployeeRepository inheritance interface IEmployeeRepository
     // Isi Method sesuai interface
-    public class EmployeeRepository : IEmployeeRepository
+    public class EmployeeRepository : IGeneralRepository<Employee> ,IEmployeeRepository
     {   // properti DbContext
         private readonly BookingManagementDbContext _context;
         //inisialisasi dbcontext (Contsructor)

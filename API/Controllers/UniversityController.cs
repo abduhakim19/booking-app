@@ -64,14 +64,15 @@ namespace API.Controllers
         }
         // Menghapus Data University
         [HttpDelete] // http method
-        public IActionResult Delete(University university)
+        public IActionResult Delete(Guid guid)
         {
+            var university = _universityRepository.GetByGuid(guid);
+            if (university is null)
+                return NotFound("Id Not Found");
             var result = _universityRepository.Delete(university);
 
             if (!result) // kareana return bool true jika berhasil maka memakai negai jika gagal
-            {
                 return BadRequest("Failed to delete data"); // 400 dengan pesan
-            }
 
             return Ok(result); //200 berhasil
         }
