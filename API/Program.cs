@@ -1,32 +1,21 @@
-using API.Contracts;
 using API.Data;
-using API.Repositories;
+using API.Startup;
+
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
+// Koneksi
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<BookingManagementDbContext>(option => option.UseSqlServer(connectionString));
 
-// Menginstance UniversityRepository dan IUniversityRepository
-builder.Services.AddScoped<IUniversityRepository, UniversityRepository>();
-
-// Add services to the container.
-
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Memanggil service yang ada di file DependencyInjection.cs
+builder.Services.RegisterServices();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.ConfigureSwagger();
 
 app.UseHttpsRedirection();
 

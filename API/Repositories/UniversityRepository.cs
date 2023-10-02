@@ -18,7 +18,7 @@ namespace API.Repositories
         {
             return _context.Set<University>().ToList();
         }
-        // Mendapatkan data berdasarkan Gui University dari database
+        // Mendapatkan data berdasarkan Guid University di database
         public University? GetByGuid(Guid guid)
         {
             return _context.Set<University>().Find(guid);
