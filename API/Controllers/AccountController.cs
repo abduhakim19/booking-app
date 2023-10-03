@@ -1,4 +1,6 @@
 ﻿using API.Contracts;
+using API.DTOs.Accounts;
+using API.DTOs.Rooms;
 using API.Models;
 using API.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -25,7 +27,8 @@ namespace API.Controllers
             {
                 return NotFound("Data Not Found"); // 404 dengan pesan
             }
-            return Ok(result); // 200 dengan data Account
+            var data = result.Select(x => (AccountDto)x);
+            return Ok(data); // 200 dengan data Account
         }
 
         // Controller Get Berdasarkan Guid /api/Account/{guid}
@@ -37,30 +40,37 @@ namespace API.Controllers
             {
                 return NotFound("Id Not Found"); // 404 dengan pesan
             }
-            return Ok(result); // 200 dengan isi data account
+            return Ok((AccountDto)result); // 200 dengan isi data account
         }
         // Menginput Data Account
         [HttpPost] // http method
-        public IActionResult Create(Account account)
+        public IActionResult Create(CreateAccountDto createAccountDto)
         {   // menambah data account
-            var result = _accountRepository.Create(account);
+            var result = _accountRepository.Create(createAccountDto);
             if (result is null) // jika null variabel result
             {
                 return BadRequest("Failed to create data"); // 400 dengan pesan
             }
-            return Ok(result); //200 dengan data account
+            return Ok((AccountDto) result); //200 dengan data account
         }
         // Mengupdate Data Account
         [HttpPut] // http method
-        public IActionResult Update(Account account)
+        public IActionResult Update(UpdateAccountDto updateAccountDto)
         {
-            var result = _accountRepository.Update(account);
+            var account = _accountRepository.GetByGuid(updateAccountDto.Guid);
+            if (account is null)
+            {
+                return NotFound("Id Not Found");
+            }
+            Account toUpdate = updateAccountDto;
+            toUpdate.CreatedDate = account.CreatedDate;
+            var result = _accountRepository.Update(toUpdate);
             if (!result) // return result bool true jika berhasil maka memakai negasi untuk gagal
             {
                 return BadRequest("Failed to update data"); // 400 dengan pesan
             }
 
-            return Ok(result); // 200
+            return Ok("Success to update data"); // 200
         }
         // Menghapus Data Account
         [HttpDelete] // http method
@@ -72,7 +82,8 @@ namespace API.Controllers
             var result = _accountRepository.Delete(account);
             if (!result)  // return result bool true jika berhasil maka memakai negasi untuk gagal
                 return BadRequest("Failed to delete data"); // 400 dengan pesan
-            return Ok(result); //200 berhasil
+            
+            return Ok("Success to delete data"); //200 berhasil
         }
     }
 }

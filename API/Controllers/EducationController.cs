@@ -1,4 +1,5 @@
 ﻿using API.Contracts;
+using API.DTOs.Educations;
 using API.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,7 +24,8 @@ namespace API.Controllers
             {
                 return NotFound("Data Not Found"); // 404 dengan pesan
             }
-            return Ok(result); // 200 dengan data Account
+            var data = result.Select(x => (EducationDto) x);
+            return Ok(data); // 200 dengan data Account
         }
         // Controller Get Berdasarkan Guid /api/Education/{guid}
         [HttpGet("guid")] //http method
@@ -34,29 +36,36 @@ namespace API.Controllers
             {
                 return NotFound("Id Not Found"); // 404 dengan pesan
             }
-            return Ok(result); // 200 dengan isi data account
+            return Ok((EducationDto) result); // 200 dengan isi data account
         }
         // Menginput Data Education
         [HttpPost] // http method
-        public IActionResult Create(Education education)
+        public IActionResult Create(CreateEducationDto createEducationDto)
         {   // menambah data account
-            var result = _educationRepository.Create(education);
+            var result = _educationRepository.Create(createEducationDto);
             if (result is null) // jika null variabel result
             {
                 return BadRequest("Failed to create data"); // 400 dengan pesan
             }
-            return Ok(result); //200 dengan data education
+            return Ok((EducationDto)result); //200 dengan data education
         }
         // Mengupdate Data Education
         [HttpPut] // http method
-        public IActionResult Update(Education education)
+        public IActionResult Update(EducationDto educationDto)
         {
-            var result = _educationRepository.Update(education);
+            var education = _educationRepository.GetByGuid(educationDto.Guid);
+            if (education is null)
+            {
+                return NotFound("Id Not Found");
+            }
+            Education toUpdate = educationDto;
+            toUpdate.CreatedDate = education.CreatedDate;
+            var result = _educationRepository.Update(toUpdate);
             if (!result) // return result bool true jika berhasil maka memakai negasi untuk gagal
             {
                 return BadRequest("Failed to update data"); // 400 dengan pesan
             }
-            return Ok(result);   // 200
+            return Ok("Success to update data");   // 200
         }
         // Menghapus Data Education
         [HttpDelete] // http method
@@ -68,7 +77,8 @@ namespace API.Controllers
             var result = _educationRepository.Delete(education);
             if (!result) // return result bool true jika berhasil maka memakai negasi untuk gagal
                 return BadRequest("Failed to delete data"); // 400 dengan pesan
-            return Ok(result); //200 berhasil
+            
+            return Ok("Success to delete data"); //200 berhasil
         }
     }
 }

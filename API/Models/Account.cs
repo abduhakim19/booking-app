@@ -11,7 +11,7 @@ namespace API.Models
         public string Password { get; set; }
         // column("") => untuk nama kolom pada table
         [Column("is_deleted")]
-        public bool isDeleted { get; set; }
+        public bool IsDeleted { get; set; }
 
         [Column("otp")]
         public int Otp {  get; set; }

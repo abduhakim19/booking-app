@@ -1,5 +1,6 @@
 ﻿using API.Contracts;
 using API.Data;
+using API.DTOs.Bookings;
 using API.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,7 +25,8 @@ namespace API.Controllers
             {
                 return NotFound("Data not found"); // 404 dengan pesan
             }
-            return Ok(result); // 200 dengan data Account
+            var data = result.Select(x => (BookingDto)x);
+            return Ok(data); // 200 dengan data Account
         }
         // Controller Get Berdasarkan Guid /api/Booking/{guid}
         [HttpGet("guid")] //http method
@@ -35,29 +37,36 @@ namespace API.Controllers
             {
                 return NotFound("Id not found"); // 404 dengan pesan
             }
-            return Ok(result); // 200 dengan isi data account
+            return Ok((BookingDto)result); // 200 dengan isi data account
         }
         // Menginput Data Booking
         [HttpPost] // http method
-        public IActionResult Create(Booking booking)
+        public IActionResult Create(CreateBookingDto createBookingDto)
         {   // menambah data booking
-            var result = _bookingRepository.Create(booking);
+            var result = _bookingRepository.Create(createBookingDto);
             if (result is null) // jika null variabel result
             {
                 return BadRequest("Failed to create data"); // 400 dengan pesan
             }
-            return Ok(result); //200 dengan data account
+            return Ok((BookingDto)result); //200 dengan data account
         }
         // Mengupdate Data Booking
         [HttpPut] // http method
-        public IActionResult Update(Booking booking)
+        public IActionResult Update(BookingDto bookingDto)
         {
-            var result = _bookingRepository.Update(booking);
+            var booking = _bookingRepository.GetByGuid(bookingDto.Guid);
+            if (booking is null)
+            {
+                return NotFound("Id Not Found");
+            }
+            Booking toUpdate = bookingDto;
+            toUpdate.CreatedDate = booking.CreatedDate;
+            var result = _bookingRepository.Update(toUpdate);
             if (!result) // return result bool true jika berhasil maka memakai negasi untuk gagal
             {
                 return BadRequest("Failed to update data"); // 400 dengan pesan
             }
-            return Ok(result); // 200
+            return Ok("Success to update data"); // 200
         }
         // Menghapus Data Booking
         [HttpDelete] // http method
@@ -71,7 +80,8 @@ namespace API.Controllers
             var result = _bookingRepository.Delete(booking);
             if (!result)
                 return BadRequest("Failed to delete data");
-            return Ok(result);
+            
+            return Ok("Success to delete data");
         } 
     }
 }

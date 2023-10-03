@@ -1,4 +1,5 @@
 ﻿using API.Contracts;
+using API.DTOs.Rooms;
 using API.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Reflection.Metadata.Ecma335;
@@ -24,7 +25,8 @@ namespace API.Controllers
             {
                 return NotFound("Data Not Found"); // 404 dengan pesan
             }
-            return Ok(result); // 200 dengan data Account
+            var data = result.Select(x => (RoomDto)x);
+            return Ok(data); // 200 dengan data Account
         }
         // Controller Get Berdasarkan Guid /api/Room/{guid}
         [HttpGet("guid")] //http method
@@ -35,29 +37,38 @@ namespace API.Controllers
             {
                 return NotFound("Id Not Found"); // 404 dengan pesan
             }
-            return Ok(result); // 200 dengan isi data room
+            return Ok((RoomDto)result); // 200 dengan isi data room
         }
         // Menginput Data Room
         [HttpPost]  // http method
-        public IActionResult Create(Room room)
+        public IActionResult Create(CreateRoomDto createRoomDto)
         {   // menambah data room
-            var result = _roomRepository.Create(room);
+            var result = _roomRepository.Create(createRoomDto);
             if (result is null) // jika null variabel result
             {
                 return BadRequest("Failed to create data"); // 400 dengan pesan
             }
-            return Ok(result); //200 dengan data account
+            return Ok((RoomDto)result); //200 dengan data account
         }
         // Mengupdate Data Room
         [HttpPut] // http method
-        public IActionResult Update(Room room)
+        public IActionResult Update(RoomDto roomDto)
         {
-            var result = _roomRepository.Update(room);
+            var room  =_roomRepository.GetByGuid(roomDto.Guid);
+            if (room is null)
+            {
+                return NotFound("Id Not Found");
+            }
+
+            Room toUpdate = roomDto;
+            toUpdate.CreatedDate = room.CreatedDate;
+            
+            var result = _roomRepository.Update(toUpdate);
             if (!result) // return result bool true jika berhasil maka memakai negasi untuk gagal
             {
                 return BadRequest("Failed to update data"); // 400 dengan pesan
             }
-            return Ok(result); // 200
+            return Ok("Success to update data"); // 200
         }
         // Menghapus Data Room
         [HttpDelete] // http method
@@ -70,7 +81,7 @@ namespace API.Controllers
             if (!result) // return result bool true jika berhasil maka memakai negasi untuk gagal
                 return BadRequest("Failed to delete data"); // 400 dengan pesan
 
-            return Ok(result); //200 berhasil
+            return Ok("Success to delete data"); //200 berhasil
         }
     }
 }

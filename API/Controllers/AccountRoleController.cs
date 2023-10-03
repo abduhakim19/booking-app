@@ -1,4 +1,6 @@
 ﻿using API.Contracts;
+using API.DTOs.Accounts;
+using API.DTOs.Rooms;
 using API.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,7 +25,8 @@ namespace API.Controllers
             {
                 return NotFound("Data not found"); // 404 dengan pesan
             }
-            return Ok(result); // 200 dengan data Account
+            var data = result.Select(x => (AccountRole)x);
+            return Ok((AccountRoleDto)result); // 200 dengan data Account
         }
         // Controller Get Berdasarkan Guid /api/AccountRole/{guid}
         [HttpGet("guid")] //http method
@@ -34,29 +37,36 @@ namespace API.Controllers
             {
                 return NotFound("Id not found"); // 404 dengan pesan
             }
-            return Ok(result); // 200 dengan isi data account
+            return Ok((AccountRoleDto)result); // 200 dengan isi data account
         }
         // Menginput Data AccountRole
         [HttpPost] // http method
-        public IActionResult Create(AccountRole accountRole)
+        public IActionResult Create(CreateAccountRoleDto createAccountRoleDto)
         {   // menambah data account
-            var result = _accountRoleRepository.Create(accountRole);
+            var result = _accountRoleRepository.Create(createAccountRoleDto);
             if (result is null) // jika null variabel result
             {
                 return BadRequest("Failed to create data"); // 400 dengan pesan
             }
-            return Ok(result);  //200 dengan data accountrole
+            return Ok((AccountRoleDto)result);  //200 dengan data accountrole
         }
         // Mengupdate Data AccountRole
         [HttpPut] // http method
-        public IActionResult Update(AccountRole accountRole)
+        public IActionResult Update(AccountRoleDto accountRoleDto)
         {
-            var result = _accountRoleRepository.Update(accountRole);
+            var accountRole = _accountRoleRepository.GetByGuid(accountRoleDto.Guid);
+            if (accountRole is null)
+            {
+                return NotFound("Id Not Found");
+            }
+            AccountRole toUpdate = accountRoleDto;
+            toUpdate.CreatedDate = accountRole.CreatedDate;
+            var result = _accountRoleRepository.Update(toUpdate);
             if (!result) // return result bool true jika berhasil maka memakai negasi untuk gagal
             {
                 return BadRequest("Failed to update data"); // 400 dengan pesan
             }
-            return Ok(result);  // 200
+            return Ok("Success to update data");  // 200
         }
         // Menghapus Data AccountRole
         [HttpDelete] // http method
@@ -67,8 +77,9 @@ namespace API.Controllers
                 return NotFound("Id Not Found");
             var result = _accountRoleRepository.Delete(accountRole);
             if (!result) // return result bool true jika berhasil maka memakai negasi untuk gagal
-                return BadRequest("Failde to delete data");  // 400 dengan pesan
-            return Ok(result); //200 berhasil
+                return BadRequest("Failed to delete data");  // 400 dengan pesan
+            
+            return Ok("Success to delete data"); //200 berhasil
         } 
     }
 }
