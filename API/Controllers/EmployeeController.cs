@@ -1,7 +1,10 @@
 ﻿using API.Contracts;
 using API.DTOs.Employees;
 using API.Models;
+using API.Repositories;
+using API.Utilities.Handlers;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace API.Controllers
 {
@@ -18,68 +21,155 @@ namespace API.Controllers
         // Controller Get untuk mendapatkan semua data Account
         [HttpGet] //http method
         public IActionResult GetAll() 
-        { 
-            var result = _employeeRepository.GetAll(); // dari repository untuk getAll
-            if (!result.Any()) // mengecek ada data atau tidak
+        {
+            try
             {
-                return NotFound("Data Not Found"); // 404 dengan pesan
+                var result = _employeeRepository.GetAll(); // dari repository untuk getAll
+                if (!result.Any()) // menegecek ada data atau tidak
+                {
+                    throw new NotFoundHandler("Data Not Found"); // throw ke NotFoundHandler
+                }
+
+                var data = result.Select(x => (EmployeeDto)x);
+
+                return Ok(new ResponseOkHandler<IEnumerable<EmployeeDto>>(data));
             }
-            var data = result.Select(x => (EmployeeDto) x);
-            return Ok(data); // 200 dengan data Employee
+            catch (NotFoundHandler ex)
+            {
+                // Return Response 404 Not Found
+                return NotFound(new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status404NotFound,
+                    Status = HttpStatusCode.NotFound.ToString(),
+                    Message = ex.Message
+                });
+            }
         }
         // Controller Get Berdasarkan Guid /api/Employee/{guid}
         [HttpGet("guid")] //http method
         public IActionResult GetByGuid(Guid guid)
         {
-            var result = _employeeRepository.GetByGuid(guid);
-            if (result is null)
+            try
             {
-                return NotFound("Id Not Found"); // 404 dengan pesan
+                var result = _employeeRepository.GetByGuid(guid);
+                if (result is null)
+                {
+                    throw new NotFoundHandler("Data Not Found"); // throw ke NotFoundHandler
+                }
+
+                return Ok(new ResponseOkHandler<EmployeeDto>((EmployeeDto)result));
             }
-            return Ok((EmployeeDto)result); // 200 dengan data employee
+            catch (NotFoundHandler ex)
+            {
+                // Return Response 404 Not Found
+                return NotFound(new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status404NotFound,
+                    Status = HttpStatusCode.NotFound.ToString(),
+                    Message = ex.Message
+                });
+            }
         }
         // Menginput Data Employee
         [HttpPost] // http method
         public IActionResult Create(CreateEmployeeDto createEmployeeDto)
-        {   // menambah data employee
-            var result = _employeeRepository.Create(createEmployeeDto);
-            if (result is null) // jika null variabel result
+        {
+            try
             {
-                return BadRequest("Failed to create data"); // 400 dengan pesan
+                Employee toCreate = createEmployeeDto;
+                
+                toCreate.Nik = GenerateHandler.Nik(_employeeRepository.GetLastNik());
+
+                var result = _employeeRepository.Create(toCreate);
+
+                return Ok(new ResponseOkHandler<EmployeeDto>((EmployeeDto)result));
             }
-            return Ok((EmployeeDto)result); //200 dengan data employee
+            catch (ExceptionHandler ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status500InternalServerError,
+                    Status = HttpStatusCode.InternalServerError.ToString(),
+                    Error = ex.Message
+                });
+            }
         }
         // Mengupdate Data Employee
         [HttpPut] // http method
         public IActionResult Update(EmployeeDto employeeDto)
         {
-            var employee = _employeeRepository.GetByGuid(employeeDto.Guid);
-            if (employee is null)
-            {
-                return NotFound("Id Not Found");
-            }
+            try
+            {   // GetByGuid dari database
+                var employee = _employeeRepository.GetByGuid(employeeDto.Guid);
+                if (employee is null)
+                {
+                    throw new NotFoundHandler("Guid Not Found");
+                }
 
-            Employee toUpdate = employeeDto;
-            toUpdate.CreatedDate = employee.CreatedDate;
-            var result = _employeeRepository.Update(toUpdate);
-            if (!result)  // return result bool true jika berhasil maka memakai negasi untuk gagal
-            {
-                return BadRequest("Failed to update data"); // 400 dengan pesan
+                Employee toUpdate = employeeDto;
+                toUpdate.CreatedDate = employee.CreatedDate;
+                toUpdate.Nik = employee.Nik;
+
+                var result = _employeeRepository.Update(toUpdate);
+
+                return Ok(new ResponseOkHandler<string>("Data Updated"));
+
             }
-            return Ok("Success to update data"); // 200
+            catch (NotFoundHandler ex)
+            {
+                // Return Response 404 Not Found
+                return NotFound(new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status404NotFound,
+                    Status = HttpStatusCode.NotFound.ToString(),
+                    Message = ex.Message
+                });
+            }
+            catch (ExceptionHandler ex) // catchh ExceptionHanlder dari repository jika error
+            {   // Return reponse dengan 500 internal ServerError
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status500InternalServerError,
+                    Status = HttpStatusCode.InternalServerError.ToString(),
+                    Error = ex.Message
+                });
+            }
         }
         // Menghapus Data Employee
         [HttpDelete] // http method
         public IActionResult Delete(Guid guid) 
         {
-            var employee = _employeeRepository.GetByGuid(guid);
-            if (employee is null)
-                return NotFound("Id Not Found");
-            var result = _employeeRepository.Delete(employee);
-            if (!result)
-                return BadRequest("Failed to delete data");
-            
-            return Ok("Success to delete data");
+            try
+            {   // GetByGuid dari database
+                var employee = _employeeRepository.GetByGuid(guid);
+                if (employee is null)
+                {
+                    throw new NotFoundHandler("Guid Not Found");
+                }
+
+                var result = _employeeRepository.Delete(employee);
+                return Ok(new ResponseOkHandler<string>("Data Deleted"));
+
+            }
+            catch (NotFoundHandler ex)
+            {
+                // Return Response 404 Not Found
+                return NotFound(new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status404NotFound,
+                    Status = HttpStatusCode.NotFound.ToString(),
+                    Message = ex.Message
+                });
+            }
+            catch (ExceptionHandler ex) // catchh ExceptionHanlder dari repository jika error
+            {   // Return reponse dengan 500 internal ServerError
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status500InternalServerError,
+                    Status = HttpStatusCode.InternalServerError.ToString(),
+                    Error = ex.Message
+                });
+            }
         } 
     }
 }

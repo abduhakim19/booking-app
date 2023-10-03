@@ -2,7 +2,10 @@
 using API.Data;
 using API.DTOs.Bookings;
 using API.Models;
+using API.Repositories;
+using API.Utilities.Handlers;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace API.Controllers
 {
@@ -19,69 +22,150 @@ namespace API.Controllers
         // Controller Get untuk mendapatkan semua data Booking
         [HttpGet] //http method
         public IActionResult GetAll() 
-        { 
-            var result = _bookingRepository.GetAll(); // dari repository untuk getAll
-            if (!result.Any()) // mengecek ada data atau tidak
+        {
+            try
             {
-                return NotFound("Data not found"); // 404 dengan pesan
+                var result = _bookingRepository.GetAll(); // dari repository untuk getAll
+                if (!result.Any()) // menegecek ada data atau tidak
+                {
+                    throw new NotFoundHandler("Data Not Found"); // throw ke NotFoundHandler
+                }
+
+                var data = result.Select(x => (BookingDto)x);
+
+                return Ok(new ResponseOkHandler<IEnumerable<BookingDto>>(data));
             }
-            var data = result.Select(x => (BookingDto)x);
-            return Ok(data); // 200 dengan data Account
+            catch (NotFoundHandler ex)
+            {
+                // Return Response 404 Not Found
+                return NotFound(new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status404NotFound,
+                    Status = HttpStatusCode.NotFound.ToString(),
+                    Message = ex.Message
+                });
+            }
         }
         // Controller Get Berdasarkan Guid /api/Booking/{guid}
         [HttpGet("guid")] //http method
         public IActionResult GetByGuid(Guid guid) 
-        { 
-            var result = _bookingRepository.GetByGuid(guid);
-            if (result is null)
+        {
+            try
             {
-                return NotFound("Id not found"); // 404 dengan pesan
+                var result = _bookingRepository.GetByGuid(guid);
+                if (result is null)
+                {
+                    throw new NotFoundHandler("Data Not Found"); // throw ke NotFoundHandler
+                }
+
+                return Ok(new ResponseOkHandler<BookingDto>((BookingDto)result));
             }
-            return Ok((BookingDto)result); // 200 dengan isi data account
+            catch (NotFoundHandler ex)
+            {
+                // Return Response 404 Not Found
+                return NotFound(new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status404NotFound,
+                    Status = HttpStatusCode.NotFound.ToString(),
+                    Message = ex.Message
+                });
+            }
         }
         // Menginput Data Booking
         [HttpPost] // http method
         public IActionResult Create(CreateBookingDto createBookingDto)
-        {   // menambah data booking
-            var result = _bookingRepository.Create(createBookingDto);
-            if (result is null) // jika null variabel result
+        {
+            try
             {
-                return BadRequest("Failed to create data"); // 400 dengan pesan
+                var result = _bookingRepository.Create(createBookingDto);
+
+                return Ok(new ResponseOkHandler<BookingDto>((BookingDto)result));
             }
-            return Ok((BookingDto)result); //200 dengan data account
+            catch (ExceptionHandler ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status500InternalServerError,
+                    Status = HttpStatusCode.InternalServerError.ToString(),
+                    Error = ex.Message
+                });
+            }
         }
         // Mengupdate Data Booking
         [HttpPut] // http method
         public IActionResult Update(BookingDto bookingDto)
         {
-            var booking = _bookingRepository.GetByGuid(bookingDto.Guid);
-            if (booking is null)
-            {
-                return NotFound("Id Not Found");
+            try
+            {   // GetByGuid dari database
+                var booking = _bookingRepository.GetByGuid(bookingDto.Guid);
+                if (booking is null)
+                {
+                    throw new NotFoundHandler("Guid Not Found");
+                }
+
+                Booking toUpdate = bookingDto;
+                toUpdate.CreatedDate = booking.CreatedDate;
+
+                var result = _bookingRepository.Update(toUpdate);
+
+                return Ok(new ResponseOkHandler<string>("Data Updated"));
+
             }
-            Booking toUpdate = bookingDto;
-            toUpdate.CreatedDate = booking.CreatedDate;
-            var result = _bookingRepository.Update(toUpdate);
-            if (!result) // return result bool true jika berhasil maka memakai negasi untuk gagal
+            catch (NotFoundHandler ex)
             {
-                return BadRequest("Failed to update data"); // 400 dengan pesan
+                // Return Response 404 Not Found
+                return NotFound(new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status404NotFound,
+                    Status = HttpStatusCode.NotFound.ToString(),
+                    Message = ex.Message
+                });
             }
-            return Ok("Success to update data"); // 200
+            catch (ExceptionHandler ex) // catchh ExceptionHanlder dari repository jika error
+            {   // Return reponse dengan 500 internal ServerError
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status500InternalServerError,
+                    Status = HttpStatusCode.InternalServerError.ToString(),
+                    Error = ex.Message
+                });
+            }
         }
         // Menghapus Data Booking
         [HttpDelete] // http method
         public IActionResult Delete(Guid guid)
         {
-     
-            var booking = _bookingRepository.GetByGuid(guid);
-            if (booking is null)
-                return NotFound("Id Not Found");
+            try
+            {   // GetByGuid dari database
+                var booking = _bookingRepository.GetByGuid(guid);
+                if (booking is null)
+                {
+                    throw new NotFoundHandler("Guid Not Found");
+                }
 
-            var result = _bookingRepository.Delete(booking);
-            if (!result)
-                return BadRequest("Failed to delete data");
-            
-            return Ok("Success to delete data");
+                var result = _bookingRepository.Delete(booking);
+                return Ok(new ResponseOkHandler<string>("Data Deleted"));
+
+            }
+            catch (NotFoundHandler ex)
+            {
+                // Return Response 404 Not Found
+                return NotFound(new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status404NotFound,
+                    Status = HttpStatusCode.NotFound.ToString(),
+                    Message = ex.Message
+                });
+            }
+            catch (ExceptionHandler ex) // catchh ExceptionHanlder dari repository jika error
+            {   // Return reponse dengan 500 internal ServerError
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status500InternalServerError,
+                    Status = HttpStatusCode.InternalServerError.ToString(),
+                    Error = ex.Message
+                });
+            }
         } 
     }
 }

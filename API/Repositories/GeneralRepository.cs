@@ -1,6 +1,7 @@
 ﻿using API.Contracts;
 using API.Data;
 using API.Models;
+using API.Utilities.Handlers;
 
 namespace API.Repositories
 {
@@ -35,7 +36,10 @@ namespace API.Repositories
                 _context.SaveChanges();
                 return data; // return jika berhasil
             }
-            catch { return null; } // return null jika gagal
+            catch (Exception ex)
+            { 
+                throw new ExceptionHandler(ex.InnerException?.Message ?? ex.Message); 
+            } 
         }
 
         public bool Update(TEntity data)
@@ -46,7 +50,11 @@ namespace API.Repositories
                 _context.SaveChanges();
                 return true; // return true jike berhasil
             }
-            catch { return false; } // return false jika gagal
+            catch (Exception ex)
+            {
+                throw new ExceptionHandler(ex.InnerException?.Message ?? ex.Message);
+            } 
+
         }
 
         public bool Delete(TEntity data)
@@ -58,7 +66,10 @@ namespace API.Repositories
                 _context.SaveChanges();
                 return true; // return true jike berhasil
             }
-            catch { return false; } // return false jika gagal
+            catch (Exception ex)
+            {
+                throw new ExceptionHandler(ex.InnerException?.Message ?? ex.Message);
+            } 
         }
     }
 }

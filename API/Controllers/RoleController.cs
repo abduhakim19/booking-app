@@ -1,7 +1,10 @@
 ﻿using API.Contracts;
 using API.DTOs.Roles;
 using API.Models;
+using API.Repositories;
+using API.Utilities.Handlers;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace API.Controllers
 {
@@ -26,60 +29,135 @@ namespace API.Controllers
             }
             var data = result.Select(x => (RoleDto) x);
 
-            return Ok(data); // 200 dengan data Role
+            return Ok(new ResponseOkHandler<IEnumerable<RoleDto>>(data));
         }
         // Controller Get Berdasarkan Guid /api/Role/{guid}
         [HttpGet("guid")] //http method
         public IActionResult GetByGuid(Guid guid) 
         { 
-            var result = _roleRepository.GetByGuid(guid);
-            if (result is null)
+            try
             {
-                return NotFound("Id Not Found"); // 404 dengan pesan
+                var result = _roleRepository.GetByGuid(guid);
+                if (result is null)
+                {
+                    throw new NotFoundHandler("Data Not Found"); // throw ke NotFoundHandler
+                }
+                return Ok(new ResponseOkHandler<RoleDto>((RoleDto)result));
             }
-            return Ok((RoleDto) result); // 200 dengan isi data role
+            catch (NotFoundHandler ex)
+            {
+                // Return Response 404 Not Found
+                return NotFound(new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status404NotFound,
+                    Status = HttpStatusCode.NotFound.ToString(),
+                    Message = ex.Message
+                });
+            }
+            
         }
         // Menginput Data Role
         [HttpPost] // http method
         public IActionResult Create(CreateRoleDto roleDto)
-        {   // menambah data role
-            var result = _roleRepository.Create(roleDto);
-            if (result is null) // jika null variabel result
+        {
+            try
             {
-                return BadRequest("Failed to create data"); // 400 dengan pesan
+                var result = _roleRepository.GetAll(); // dari repository untuk getAll
+                if (!result.Any()) // menegecek ada data atau tidak
+                {
+                    throw new NotFoundHandler("Data Not Found"); // throw ke NotFoundHandler
+                }
+
+                var data = result.Select(x => (RoleDto)x);
+
+                return Ok(new ResponseOkHandler<IEnumerable<RoleDto>>(data));
             }
-            return Ok((RoleDto)result); //200 dengan data account
+            catch (NotFoundHandler ex)
+            {
+                // Return Response 404 Not Found
+                return NotFound(new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status404NotFound,
+                    Status = HttpStatusCode.NotFound.ToString(),
+                    Message = ex.Message
+                });
+            }
+
         }
         // Mengupdate Data Role
         [HttpPut] // http method
         public IActionResult Update(RoleDto roleDto)
         {
-            var role = _roleRepository.GetByGuid(roleDto.Guid);
-            if (role is null)
+            try
             {
-                return NotFound("Id Not Found");
+                var role = _roleRepository.GetByGuid(roleDto.Guid);
+                if (role is null)
+                {
+                    throw new NotFoundHandler("Guid Not Found");
+                }
+                Role toUpdate = roleDto;
+                toUpdate.CreatedDate = role.CreatedDate;
+
+                var result = _roleRepository.Update(toUpdate);
+
+                return Ok(new ResponseOkHandler<string>("Data Updated"));
             }
-            Role toUpdate = roleDto;
-            toUpdate.CreatedDate = role.CreatedDate;
-            var result = _roleRepository.Update(toUpdate);
-            if (!result) // return result bool true jika berhasil maka memakai negasi untuk gagal
+            catch (NotFoundHandler ex)
             {
-                return BadRequest("Failed to update data"); // 400 dengan pesan
+                // Return Response 404 Not Found
+                return NotFound(new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status404NotFound,
+                    Status = HttpStatusCode.NotFound.ToString(),
+                    Message = ex.Message
+                });
             }
-            return Ok("Success to update data"); // 200
+            catch (ExceptionHandler ex) // catchh ExceptionHanlder dari repository jika error
+            {   // Return reponse dengan 500 internal ServerError
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status500InternalServerError,
+                    Status = HttpStatusCode.InternalServerError.ToString(),
+                    Error = ex.Message
+                });
+            }
+            
         }
         // Menghapus Data Role
         [HttpDelete] // http method
         public IActionResult Delete(Guid guid)
         {
-            var role = _roleRepository.GetByGuid(guid);
-            if (role is null)
-                return NotFound("Id Not Found");
-            var result = _roleRepository.Delete(role);
-            if (!result) // return result bool true jika berhasil maka memakai negasi untuk gagal
-                return BadRequest("Failed to delete data"); // 400 dengan pesan
+            try
+            {   // GetByGuid dari database
+                var role = _roleRepository.GetByGuid(guid);
+                if (role is null)
+                {
+                    throw new NotFoundHandler("Guid Not Found");
+                }
 
-            return Ok("Success to delete data"); //200 berhasil
+                var result = _roleRepository.Delete(role);
+                return Ok(new ResponseOkHandler<string>("Data Deleted"));
+
+            }
+            catch (NotFoundHandler ex)
+            {
+                // Return Response 404 Not Found
+                return NotFound(new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status404NotFound,
+                    Status = HttpStatusCode.NotFound.ToString(),
+                    Message = ex.Message
+                });
+            }
+            catch (ExceptionHandler ex) // catchh ExceptionHanlder dari repository jika error
+            {   // Return reponse dengan 500 internal ServerError
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status500InternalServerError,
+                    Status = HttpStatusCode.InternalServerError.ToString(),
+                    Error = ex.Message
+                });
+            }
         }
     }
 }

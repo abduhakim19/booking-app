@@ -1,8 +1,10 @@
 ﻿using API.Contracts;
 using API.DTOs.Rooms;
 using API.Models;
+using API.Repositories;
+using API.Utilities.Handlers;
 using Microsoft.AspNetCore.Mvc;
-using System.Reflection.Metadata.Ecma335;
+using System.Net;
 
 namespace API.Controllers
 {
@@ -20,68 +22,151 @@ namespace API.Controllers
         [HttpGet] //http method
         public IActionResult GetAll()  
         {
-            var result = _roomRepository.GetAll(); // dari repository untuk getAll
-            if (!result.Any()) // mengecek ada data atau tidak
+            try
             {
-                return NotFound("Data Not Found"); // 404 dengan pesan
+                var result = _roomRepository.GetAll(); // dari repository untuk getAll
+                if (!result.Any()) // menegecek ada data atau tidak
+                {
+                    throw new NotFoundHandler("Data Not Found"); // throw ke NotFoundHandler
+                }
+
+                var data = result.Select(x => (RoomDto)x);
+
+                return Ok(new ResponseOkHandler<IEnumerable<RoomDto>>(data));
             }
-            var data = result.Select(x => (RoomDto)x);
-            return Ok(data); // 200 dengan data Account
+            catch (NotFoundHandler ex)
+            {
+                // Return Response 404 Not Found
+                return NotFound(new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status404NotFound,
+                    Status = HttpStatusCode.NotFound.ToString(),
+                    Message = ex.Message
+                });
+            }
         }
         // Controller Get Berdasarkan Guid /api/Room/{guid}
         [HttpGet("guid")] //http method
         public IActionResult GetByGuid(Guid guid) 
         { 
-            var result = _roomRepository.GetByGuid(guid);
-            if (result is null)
+            try
             {
-                return NotFound("Id Not Found"); // 404 dengan pesan
+                var result = _roomRepository.GetByGuid(guid);
+                if (result is null)
+                {
+                    throw new NotFoundHandler("Data Not Found"); // throw ke NotFoundHandler
+                }
+
+                return Ok(new ResponseOkHandler<RoomDto>((RoomDto)result));
             }
-            return Ok((RoomDto)result); // 200 dengan isi data room
+            catch (NotFoundHandler ex)
+            {
+                // Return Response 404 Not Found
+                return NotFound(new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status404NotFound,
+                    Status = HttpStatusCode.NotFound.ToString(),
+                    Message = ex.Message
+                });
+            }
+            
         }
+
         // Menginput Data Room
         [HttpPost]  // http method
         public IActionResult Create(CreateRoomDto createRoomDto)
-        {   // menambah data room
-            var result = _roomRepository.Create(createRoomDto);
-            if (result is null) // jika null variabel result
+        {   
+            try
             {
-                return BadRequest("Failed to create data"); // 400 dengan pesan
+                // menambah data room
+                var result = _roomRepository.Create(createRoomDto);
+
+                return Ok(new ResponseOkHandler<RoomDto>((RoomDto)result));
             }
-            return Ok((RoomDto)result); //200 dengan data account
+            catch (ExceptionHandler ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status500InternalServerError,
+                    Status = HttpStatusCode.InternalServerError.ToString(),
+                    Error = ex.Message
+                });
+            }
         }
         // Mengupdate Data Room
         [HttpPut] // http method
         public IActionResult Update(RoomDto roomDto)
         {
-            var room  =_roomRepository.GetByGuid(roomDto.Guid);
-            if (room is null)
+            try
             {
-                return NotFound("Id Not Found");
-            }
+                var room = _roomRepository.GetByGuid(roomDto.Guid);
+                if (room is null)
+                {
+                    throw new NotFoundHandler("Guid Not Found");
+                }
 
-            Room toUpdate = roomDto;
-            toUpdate.CreatedDate = room.CreatedDate;
-            
-            var result = _roomRepository.Update(toUpdate);
-            if (!result) // return result bool true jika berhasil maka memakai negasi untuk gagal
-            {
-                return BadRequest("Failed to update data"); // 400 dengan pesan
+                Room toUpdate = roomDto;
+                toUpdate.CreatedDate = room.CreatedDate;
+
+                var result = _roomRepository.Update(toUpdate);
+
+                return Ok(new ResponseOkHandler<string>("Data Updated"));
             }
-            return Ok("Success to update data"); // 200
+            catch (NotFoundHandler ex)
+            {
+                // Return Response 404 Not Found
+                return NotFound(new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status404NotFound,
+                    Status = HttpStatusCode.NotFound.ToString(),
+                    Message = ex.Message
+                });
+            }
+            catch (ExceptionHandler ex) // catchh ExceptionHanlder dari repository jika error
+            {   // Return reponse dengan 500 internal ServerError
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status500InternalServerError,
+                    Status = HttpStatusCode.InternalServerError.ToString(),
+                    Error = ex.Message
+                });
+            }
+            
         }
         // Menghapus Data Room
         [HttpDelete] // http method
         public IActionResult Delete(Guid guid) 
         { 
-            var room = _roomRepository.GetByGuid(guid);
-            if (room is null)
-                return NotFound("Id Not Found");
-            var result = _roomRepository.Delete(room);
-            if (!result) // return result bool true jika berhasil maka memakai negasi untuk gagal
-                return BadRequest("Failed to delete data"); // 400 dengan pesan
+            try
+            {
+                var room = _roomRepository.GetByGuid(guid);
+                if (room is null)
+                {
+                    throw new NotFoundHandler("Guid Not Found");
+                }
+                var result = _roomRepository.Delete(room);
 
-            return Ok("Success to delete data"); //200 berhasil
+                return Ok(new ResponseOkHandler<string>("Data Deleted"));
+            }
+            catch (NotFoundHandler ex)
+            {
+                // Return Response 404 Not Found
+                return NotFound(new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status404NotFound,
+                    Status = HttpStatusCode.NotFound.ToString(),
+                    Message = ex.Message
+                });
+            }
+            catch (ExceptionHandler ex) // catchh ExceptionHanlder dari repository jika error
+            {   // Return reponse dengan 500 internal ServerError
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status500InternalServerError,
+                    Status = HttpStatusCode.InternalServerError.ToString(),
+                    Error = ex.Message
+                });
+            }
         }
     }
 }

@@ -1,12 +1,15 @@
-﻿
-using API.Models;
+﻿using API.Models;
 
 namespace API.DTOs.Accounts
 {
     public class CreateAccountDto
     {
-        public string Password { get; set; }
         public Guid Guid { get; set; }
+        public string Password { get; set; }
+        public int Otp { get; set; }
+        public bool IsUsed { get; set; }
+        public bool IsDeleted { get; set; }
+        public DateTime ExpiredTime { get; set; }
 
         public static implicit operator Account(CreateAccountDto createAccountDto)
         {
@@ -14,8 +17,10 @@ namespace API.DTOs.Accounts
             {
                 Guid = createAccountDto.Guid,
                 Password = createAccountDto.Password,
-                IsDeleted = false,
-                IsUsed = false,
+                Otp = createAccountDto.Otp,
+                IsUsed = createAccountDto.IsUsed,
+                IsDeleted = createAccountDto.IsDeleted,
+                ExpiredTime = createAccountDto.ExpiredTime,
                 CreatedDate = DateTime.Now,
                 ModifiedDate = DateTime.Now
             };

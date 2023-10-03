@@ -1,7 +1,7 @@
 ﻿
 using API.Models;
 
-namespace API.DTOs.Rooms
+namespace API.DTOs.AccountRoles
 {
     public class CreateAccountRoleDto
     {

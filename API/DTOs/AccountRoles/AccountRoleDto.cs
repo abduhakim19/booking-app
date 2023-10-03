@@ -1,7 +1,7 @@
 ﻿using API.Models;
 using System.Security.Principal;
 
-namespace API.DTOs.Accounts
+namespace API.DTOs.AccountRoles
 {
     public class AccountRoleDto
     {

@@ -1,7 +1,10 @@
 ﻿using API.Contracts;
 using API.DTOs.Educations;
 using API.Models;
+using API.Repositories;
+using API.Utilities.Handlers;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace API.Controllers
 {
@@ -19,66 +22,149 @@ namespace API.Controllers
         [HttpGet] //http method
         public IActionResult GetAll()
         {
-            var result = _educationRepository.GetAll(); // dari repository untuk getAll
-            if (!result.Any()) // mengecek ada data atau tidak
+            try
             {
-                return NotFound("Data Not Found"); // 404 dengan pesan
+                var result = _educationRepository.GetAll(); // dari repository untuk getAll
+                if (!result.Any()) // menegecek ada data atau tidak
+                {
+                    throw new NotFoundHandler("Data Not Found"); // throw ke NotFoundHandler
+                }
+
+                var data = result.Select(x => (EducationDto)x);
+
+                return Ok(new ResponseOkHandler<IEnumerable<EducationDto>>(data));
             }
-            var data = result.Select(x => (EducationDto) x);
-            return Ok(data); // 200 dengan data Account
+            catch (NotFoundHandler ex)
+            {
+                // Return Response 404 Not Found
+                return NotFound(new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status404NotFound,
+                    Status = HttpStatusCode.NotFound.ToString(),
+                    Message = ex.Message
+                });
+            }
         }
         // Controller Get Berdasarkan Guid /api/Education/{guid}
         [HttpGet("guid")] //http method
         public IActionResult GetByGuid(Guid guid) 
         {
-            var result = _educationRepository.GetByGuid(guid);
-            if (result is null)
+            try
             {
-                return NotFound("Id Not Found"); // 404 dengan pesan
+                var result = _educationRepository.GetByGuid(guid);
+                if (result is null)
+                {
+                    throw new NotFoundHandler("Data Not Found"); // throw ke NotFoundHandler
+                }
+
+                return Ok(new ResponseOkHandler<EducationDto>((EducationDto)result));
             }
-            return Ok((EducationDto) result); // 200 dengan isi data account
+            catch (NotFoundHandler ex)
+            {
+                // Return Response 404 Not Found
+                return NotFound(new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status404NotFound,
+                    Status = HttpStatusCode.NotFound.ToString(),
+                    Message = ex.Message
+                });
+            }
         }
         // Menginput Data Education
         [HttpPost] // http method
         public IActionResult Create(CreateEducationDto createEducationDto)
-        {   // menambah data account
-            var result = _educationRepository.Create(createEducationDto);
-            if (result is null) // jika null variabel result
+        {
+            try
             {
-                return BadRequest("Failed to create data"); // 400 dengan pesan
+                var result = _educationRepository.Create(createEducationDto);
+
+                return Ok(new ResponseOkHandler<EducationDto>((EducationDto)result));
             }
-            return Ok((EducationDto)result); //200 dengan data education
+            catch (ExceptionHandler ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status500InternalServerError,
+                    Status = HttpStatusCode.InternalServerError.ToString(),
+                    Error = ex.Message
+                });
+            }
         }
         // Mengupdate Data Education
         [HttpPut] // http method
         public IActionResult Update(EducationDto educationDto)
         {
-            var education = _educationRepository.GetByGuid(educationDto.Guid);
-            if (education is null)
-            {
-                return NotFound("Id Not Found");
+            try
+            {   // GetByGuid dari database
+                var education = _educationRepository.GetByGuid(educationDto.Guid);
+                if (education is null)
+                {
+                    throw new NotFoundHandler("Guid Not Found");
+                }
+
+                Education toUpdate = educationDto;
+                toUpdate.CreatedDate = education.CreatedDate;
+
+                var result = _educationRepository.Update(toUpdate);
+
+                return Ok(new ResponseOkHandler<string>("Data Updated"));
+
             }
-            Education toUpdate = educationDto;
-            toUpdate.CreatedDate = education.CreatedDate;
-            var result = _educationRepository.Update(toUpdate);
-            if (!result) // return result bool true jika berhasil maka memakai negasi untuk gagal
+            catch (NotFoundHandler ex)
             {
-                return BadRequest("Failed to update data"); // 400 dengan pesan
+                // Return Response 404 Not Found
+                return NotFound(new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status404NotFound,
+                    Status = HttpStatusCode.NotFound.ToString(),
+                    Message = ex.Message
+                });
             }
-            return Ok("Success to update data");   // 200
+            catch (ExceptionHandler ex) // catchh ExceptionHanlder dari repository jika error
+            {   // Return reponse dengan 500 internal ServerError
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status500InternalServerError,
+                    Status = HttpStatusCode.InternalServerError.ToString(),
+                    Error = ex.Message
+                });
+            }
         }
         // Menghapus Data Education
         [HttpDelete] // http method
         public IActionResult Delete(Guid guid) 
         {
-            var education = _educationRepository.GetByGuid(guid);
-            if (education is null)
-                return NotFound("Id Not Found");
-            var result = _educationRepository.Delete(education);
-            if (!result) // return result bool true jika berhasil maka memakai negasi untuk gagal
-                return BadRequest("Failed to delete data"); // 400 dengan pesan
-            
-            return Ok("Success to delete data"); //200 berhasil
+            try
+            {   // GetByGuid dari database
+                var education = _educationRepository.GetByGuid(guid);
+                if (education is null)
+                {
+                    throw new NotFoundHandler("Guid Not Found");
+                }
+
+                var result = _educationRepository.Delete(education);
+                return Ok(new ResponseOkHandler<string>("Data Deleted"));
+
+            }
+            catch (NotFoundHandler ex)
+            {
+                // Return Response 404 Not Found
+                return NotFound(new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status404NotFound,
+                    Status = HttpStatusCode.NotFound.ToString(),
+                    Message = ex.Message
+                });
+            }
+            catch (ExceptionHandler ex) // catchh ExceptionHanlder dari repository jika error
+            {   // Return reponse dengan 500 internal ServerError
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseErrorHandler
+                {
+                    Code = StatusCodes.Status500InternalServerError,
+                    Status = HttpStatusCode.InternalServerError.ToString(),
+                    Error = ex.Message
+                });
+            }
         }
     }
 }
