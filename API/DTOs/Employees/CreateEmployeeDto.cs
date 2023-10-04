@@ -7,7 +7,7 @@ namespace API.DTOs.Employees
     public class CreateEmployeeDto
     {
         public string FirstName { get; set; }
-        public string LastName { get; set; }
+        public string? LastName { get; set; }
         public DateTime BirthDate { get; set; }
         public GenderLevel Gender { get; set; }
         public DateTime HiringDate { get; set; }

@@ -76,6 +76,7 @@ namespace API.Controllers
         {
             try
             {
+
                 Employee toCreate = createEmployeeDto;
                 
                 toCreate.Nik = GenerateHandler.Nik(_employeeRepository.GetLastNik());

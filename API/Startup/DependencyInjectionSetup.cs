@@ -1,5 +1,10 @@
 ﻿using API.Contracts;
 using API.Repositories;
+using API.Utilities.Handlers;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Mvc;
+using System.Reflection;
 
 namespace API.Startup
 {
@@ -26,10 +31,24 @@ namespace API.Startup
             // Menginstance EmployeeRepository dan IEmployeeRepository
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 
-            services.AddControllers();
+            services.AddControllers()
+                .ConfigureApiBehaviorOptions(options =>
+                {
+                    // Response Error Validation 
+                    options.InvalidModelStateResponseFactory = context =>
+                    {
+                    var errors = context.ModelState.Values
+                                        .SelectMany(v => v.Errors)
+                                        .Select(v => v.ErrorMessage);
+                    return new BadRequestObjectResult(new ResponseValidatorHandler(errors));
+                    };
+                });
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
+            // inisialisai untuk menambahkan fluentvalidator
+            services.AddFluentValidationAutoValidation()
+                .AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
             return services;
         }

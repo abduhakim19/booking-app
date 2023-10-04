@@ -32,6 +32,7 @@ namespace API.DTOs.Accounts
                 Guid = accountDto.Guid,
                 IsDeleted = accountDto.IsDeleted,
                 ExpiredTime = accountDto.ExpiredTime,
+                Password = accountDto.Password,
                 ModifiedDate = DateTime.Now,
             };
         }
