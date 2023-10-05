@@ -78,7 +78,7 @@ namespace API.Controllers
             {
                 var result = _accountRoleRepository.Create(createAccountRoleDto);
 
-                return Ok(new ResponseOkHandler<AccountRoleDto>((AccountRoleDto)result));
+                return Ok(new ResponseOkHandler<AccountRoleDto>((AccountRoleDto) result));
             }
             catch (ExceptionHandler ex)
             {

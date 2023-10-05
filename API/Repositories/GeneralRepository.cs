@@ -1,7 +1,11 @@
 ﻿using API.Contracts;
 using API.Data;
+using API.DTOs.Accounts;
+using API.DTOs.Universities;
 using API.Models;
 using API.Utilities.Handlers;
+using Microsoft.EntityFrameworkCore;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace API.Repositories
 {
@@ -37,8 +41,8 @@ namespace API.Repositories
                 return data; // return jika berhasil
             }
             catch (Exception ex)
-            { 
-                throw new ExceptionHandler(ex.InnerException?.Message ?? ex.Message); 
+            {
+                throw new ExceptionHandler(ex.InnerException?.Message ?? ex.Message);
             } 
         }
 

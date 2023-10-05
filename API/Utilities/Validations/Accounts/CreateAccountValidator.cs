@@ -15,7 +15,7 @@ namespace API.Utilities.Validations.Accounts
                 .NotEmpty();
             // validasi otp
             RuleFor(a => a.Otp)
-                .NotEmpty();
+                .NotNull();
             // validasi is_used
             RuleFor(a => a.IsUsed)
                 .NotEmpty();

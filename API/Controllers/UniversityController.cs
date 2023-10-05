@@ -77,7 +77,7 @@ namespace API.Controllers
             {
                 var result = _universityRepository.Create(createUniversityDto);
 
-                return Ok(new ResponseOkHandler<UniversityDto>((UniversityDto)result));
+                return Ok(new ResponseOkHandler<UniversityDto>((UniversityDto) result));
             } catch (ExceptionHandler ex) 
             {   
                 return StatusCode(StatusCodes.Status500InternalServerError, new ResponseErrorHandler

@@ -10,6 +10,7 @@ namespace API.DTOs.Accounts
         public int Otp {  get; set; }
         public string Password { get; set; }
         public DateTime ExpiredTime { get; set; }
+        public bool IsUsed { get; set; }
 
 
 
@@ -21,6 +22,7 @@ namespace API.DTOs.Accounts
                 Otp = account.Otp,
                 IsDeleted = account.IsDeleted,
                 ExpiredTime = account.ExpiredTime,
+                IsUsed = account.IsUsed,
                 Password = account.Password
             };
         }
@@ -33,6 +35,7 @@ namespace API.DTOs.Accounts
                 IsDeleted = accountDto.IsDeleted,
                 ExpiredTime = accountDto.ExpiredTime,
                 Password = accountDto.Password,
+                IsUsed = accountDto.IsUsed,
                 ModifiedDate = DateTime.Now,
             };
         }

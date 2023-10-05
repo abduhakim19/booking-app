@@ -14,7 +14,7 @@ namespace API.Utilities.Validations.Accounts
                 .NotEmpty();
             // validasi otp
             RuleFor(a => a.Otp)
-                .NotEmpty();
+                .NotNull();
             // validasi expired time
             RuleFor(a => a.ExpiredTime)
                 .NotEmpty();

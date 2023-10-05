@@ -1,4 +1,6 @@
-﻿namespace API.Contracts
+﻿using API.DTOs.Accounts;
+
+namespace API.Contracts
 {
     public interface IGeneralRepository <TEntity> where TEntity : class
     {

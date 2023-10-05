@@ -20,5 +20,13 @@ namespace API.Repositories
             _context.ChangeTracker.Clear();
             return entity;
         }
+
+        public Employee? GetByEmail(string email)
+        {
+            var data = _context.Set<Employee>().Where(x => x.Email == email).FirstOrDefault();
+            _context.ChangeTracker.Clear();
+
+            return data;
+        }
     }
 }
