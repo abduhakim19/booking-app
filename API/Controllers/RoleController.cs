@@ -1,15 +1,18 @@
 ﻿using API.Contracts;
 using API.DTOs.Roles;
+using API.DTOs.Universities;
 using API.Models;
 using API.Repositories;
 using API.Utilities.Handlers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")] //alamat url
+    [Route("api/roles")] //alamat url
+    [Authorize(Roles = "admin")]
     public class RoleController : ControllerBase
     {
         private readonly IRoleRepository _roleRepository;
@@ -29,10 +32,10 @@ namespace API.Controllers
             }
             var data = result.Select(x => (RoleDto) x);
 
-            return Ok(new ResponseOkHandler<IEnumerable<RoleDto>>(data));
+            return Ok(new ResponseOkHandler<IEnumerable<RoleDto>>("Success to retrieve data", data));
         }
         // Controller Get Berdasarkan Guid /api/Role/{guid}
-        [HttpGet("guid")] //http method
+        [HttpGet("{guid}")] //http method
         public IActionResult GetByGuid(Guid guid) 
         { 
             try
@@ -42,7 +45,7 @@ namespace API.Controllers
                 {
                     throw new NotFoundHandler("Data Not Found"); // throw ke NotFoundHandler
                 }
-                return Ok(new ResponseOkHandler<RoleDto>((RoleDto)result));
+                return Ok(new ResponseOkHandler<RoleDto>("Success to retrieve data", (RoleDto)result));
             }
             catch (NotFoundHandler ex)
             {
@@ -62,24 +65,17 @@ namespace API.Controllers
         {
             try
             {
-                var result = _roleRepository.GetAll(); // dari repository untuk getAll
-                if (!result.Any()) // menegecek ada data atau tidak
-                {
-                    throw new NotFoundHandler("Data Not Found"); // throw ke NotFoundHandler
-                }
+                var result = _roleRepository.Create(roleDto);
 
-                var data = result.Select(x => (RoleDto)x);
-
-                return Ok(new ResponseOkHandler<IEnumerable<RoleDto>>(data));
+                return Ok(new ResponseOkHandler<RoleDto>("Success to create data", (RoleDto) result));
             }
-            catch (NotFoundHandler ex)
+            catch (ExceptionHandler ex)
             {
-                // Return Response 404 Not Found
-                return NotFound(new ResponseErrorHandler
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseErrorHandler
                 {
-                    Code = StatusCodes.Status404NotFound,
-                    Status = HttpStatusCode.NotFound.ToString(),
-                    Message = ex.Message
+                    Code = StatusCodes.Status500InternalServerError,
+                    Status = HttpStatusCode.InternalServerError.ToString(),
+                    Error = ex.Message
                 });
             }
 

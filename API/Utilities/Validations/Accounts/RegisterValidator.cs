@@ -15,7 +15,7 @@ namespace API.Utilities.Validations.Accounts
                 .MaximumLength(100);
             // validasi password
             RuleFor(c => c.Password)
-                .Equal(c => c.NewPasword)
+                .Equal(c => c.ConfirmPassword)
                 .NotEmpty();
 
             RuleFor(c => c.FirstName)

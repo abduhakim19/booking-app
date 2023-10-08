@@ -1,11 +1,6 @@
 ﻿using API.Contracts;
 using API.Data;
-using API.DTOs.Accounts;
-using API.DTOs.Universities;
-using API.Models;
 using API.Utilities.Handlers;
-using Microsoft.EntityFrameworkCore;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace API.Repositories
 {
@@ -13,7 +8,7 @@ namespace API.Repositories
     TEntity : class
     {
         // properti DbContext
-        private readonly BookingManagementDbContext _context;
+        public readonly BookingManagementDbContext _context;
         //inisialisasi dbcontext (Contsructor)
         public GeneralRepository(BookingManagementDbContext context)
         {

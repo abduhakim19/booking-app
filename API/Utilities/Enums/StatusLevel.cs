@@ -5,9 +5,9 @@ namespace API.Utilites.Enums
     public enum StatusLevel
     {
         Requested = 1,
-        OnProgress = 2,
+        OnBooking = 2,
         Completed = 3, 
         Cancelled = 4
-        
+
     }
 }

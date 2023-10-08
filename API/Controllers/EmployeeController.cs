@@ -4,15 +4,17 @@ using API.DTOs.Employees;
 using API.Models;
 using API.Repositories;
 using API.Utilities.Handlers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")] //alamat url
+    [Route("api/employees")] //alamat url
+    [Authorize(Roles = "admin")]
     public class EmployeeController : ControllerBase
-    {
+    {   
         private readonly IEmployeeRepository _employeeRepository;
         // Inisialisasi untuk IEmployeeRepository (Contructor)
         public EmployeeController (IEmployeeRepository employeeRepository)
@@ -33,7 +35,7 @@ namespace API.Controllers
 
                 var data = result.Select(x => (EmployeeDto)x);
 
-                return Ok(new ResponseOkHandler<IEnumerable<EmployeeDto>>(data));
+                return Ok(new ResponseOkHandler<IEnumerable<EmployeeDto>>("Success to retrieve data", data));
             }
             catch (NotFoundHandler ex)
             {
@@ -47,7 +49,7 @@ namespace API.Controllers
             }
         }
         // Controller Get Berdasarkan Guid /api/Employee/{guid}
-        [HttpGet("guid")] //http method
+        [HttpGet("{guid}")] //http method
         public IActionResult GetByGuid(Guid guid)
         {
             try
@@ -58,7 +60,7 @@ namespace API.Controllers
                     throw new NotFoundHandler("Data Not Found"); // throw ke NotFoundHandler
                 }
 
-                return Ok(new ResponseOkHandler<EmployeeDto>((EmployeeDto)result));
+                return Ok(new ResponseOkHandler<EmployeeDto>("Success to retrieve data", (EmployeeDto)result));
             }
             catch (NotFoundHandler ex)
             {
@@ -84,7 +86,7 @@ namespace API.Controllers
 
                 var result = _employeeRepository.Create(toCreate);
 
-                return Ok(new ResponseOkHandler<EmployeeDto>((EmployeeDto)result));
+                return Ok(new ResponseOkHandler<EmployeeDto>("Success to create data", (EmployeeDto)result));
             }
             catch (ExceptionHandler ex)
             {

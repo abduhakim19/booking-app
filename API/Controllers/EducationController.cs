@@ -1,15 +1,16 @@
 ﻿using API.Contracts;
 using API.DTOs.Educations;
 using API.Models;
-using API.Repositories;
 using API.Utilities.Handlers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")] //alamat url
+    [Route("api/educations")] //alamat url
+    [Authorize(Roles = "admin")]
     public class EducationController : ControllerBase
     {
         private readonly IEducationRepository _educationRepository;
@@ -32,7 +33,7 @@ namespace API.Controllers
 
                 var data = result.Select(x => (EducationDto)x);
 
-                return Ok(new ResponseOkHandler<IEnumerable<EducationDto>>(data));
+                return Ok(new ResponseOkHandler<IEnumerable<EducationDto>>("Success to create data", data));
             }
             catch (NotFoundHandler ex)
             {
@@ -46,7 +47,7 @@ namespace API.Controllers
             }
         }
         // Controller Get Berdasarkan Guid /api/Education/{guid}
-        [HttpGet("guid")] //http method
+        [HttpGet("{guid}")] //http method
         public IActionResult GetByGuid(Guid guid) 
         {
             try
@@ -57,7 +58,7 @@ namespace API.Controllers
                     throw new NotFoundHandler("Data Not Found"); // throw ke NotFoundHandler
                 }
 
-                return Ok(new ResponseOkHandler<EducationDto>((EducationDto)result));
+                return Ok(new ResponseOkHandler<EducationDto>("Success to retrieve data", (EducationDto)result));
             }
             catch (NotFoundHandler ex)
             {
@@ -78,7 +79,7 @@ namespace API.Controllers
             {
                 var result = _educationRepository.Create(createEducationDto);
 
-                return Ok(new ResponseOkHandler<EducationDto>((EducationDto)result));
+                return Ok(new ResponseOkHandler<EducationDto>("Success to create data", (EducationDto)result));
             }
             catch (ExceptionHandler ex)
             {

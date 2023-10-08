@@ -3,13 +3,15 @@ using API.DTOs.AccountRoles;
 using API.Models;
 using API.Repositories;
 using API.Utilities.Handlers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")] //alamat url
+    [Route("api/account-roles")] //alamat url
+    [Authorize(Roles = "admin")]
     public class AccountRoleController : ControllerBase
     {
         private readonly IAccountRoleRepository _accountRoleRepository;
@@ -32,7 +34,7 @@ namespace API.Controllers
 
                 var data = result.Select(x => (AccountRoleDto)x);
 
-                return Ok(new ResponseOkHandler<IEnumerable<AccountRoleDto>>(data));
+                return Ok(new ResponseOkHandler<IEnumerable<AccountRoleDto>>("Success to retrieve data", data));
             }
             catch (NotFoundHandler ex)
             {
@@ -46,7 +48,7 @@ namespace API.Controllers
             }
         }
         // Controller Get Berdasarkan Guid /api/AccountRole/{guid}
-        [HttpGet("guid")] //http method
+        [HttpGet("{guid}")] //http method
         public IActionResult GetByGuid(Guid guid) 
         {
             try
@@ -57,7 +59,7 @@ namespace API.Controllers
                     throw new NotFoundHandler("Data Not Found"); // throw ke NotFoundHandler
                 }
 
-                return Ok(new ResponseOkHandler<AccountRoleDto>((AccountRoleDto)result));
+                return Ok(new ResponseOkHandler<AccountRoleDto>("Success to retrieve data", (AccountRoleDto)result));
             }
             catch (NotFoundHandler ex)
             {
@@ -78,7 +80,7 @@ namespace API.Controllers
             {
                 var result = _accountRoleRepository.Create(createAccountRoleDto);
 
-                return Ok(new ResponseOkHandler<AccountRoleDto>((AccountRoleDto) result));
+                return Ok(new ResponseOkHandler<AccountRoleDto>("Success to create data", (AccountRoleDto) result));
             }
             catch (ExceptionHandler ex)
             {

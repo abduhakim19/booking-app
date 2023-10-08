@@ -4,11 +4,13 @@ using Microsoft.AspNetCore.Mvc;
 using API.DTOs.Universities;
 using API.Utilities.Handlers;
 using System.Net;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")] // alamat url
+    [Route("api/university")] // alamat url
+    [Authorize(Roles = "admin") ]
     public class UniversityController : ControllerBase
     {
         private readonly IUniversityRepository _universityRepository;
@@ -31,7 +33,7 @@ namespace API.Controllers
 
                 var data = result.Select(x => (UniversityDto)x);
 
-                return Ok(new ResponseOkHandler<IEnumerable<UniversityDto>>(data));
+                return Ok(new ResponseOkHandler<IEnumerable<UniversityDto>>("Success to retrieve data", data));
             }
             catch (NotFoundHandler ex)
             {
@@ -56,7 +58,7 @@ namespace API.Controllers
                     throw new NotFoundHandler("Data Not Found"); // throw ke NotFoundHandler
                 }
 
-                return Ok(new ResponseOkHandler<UniversityDto>((UniversityDto)result));
+                return Ok(new ResponseOkHandler<UniversityDto>("Success to retrieve data", (UniversityDto)result));
             }
             catch (NotFoundHandler ex)
             {
@@ -77,7 +79,7 @@ namespace API.Controllers
             {
                 var result = _universityRepository.Create(createUniversityDto);
 
-                return Ok(new ResponseOkHandler<UniversityDto>((UniversityDto) result));
+                return Ok(new ResponseOkHandler<UniversityDto>("Success to create data", (UniversityDto) result));
             } catch (ExceptionHandler ex) 
             {   
                 return StatusCode(StatusCodes.Status500InternalServerError, new ResponseErrorHandler

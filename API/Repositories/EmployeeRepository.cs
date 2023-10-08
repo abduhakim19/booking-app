@@ -8,12 +8,8 @@ namespace API.Repositories
 {
     // class EmployeeRepository inheritance interface IEmployeeRepository
     public class EmployeeRepository : GeneralRepository<Employee>, IEmployeeRepository
-    {   // properti DbContext
-        private readonly BookingManagementDbContext _context;
-        public EmployeeRepository(BookingManagementDbContext context) : base(context) 
-        {
-            _context = context;
-        }
+    {  
+        public EmployeeRepository(BookingManagementDbContext context) : base(context) { }
         public string GetLastNik()
         {
             var entity = _context.Set<Employee>().OrderByDescending(e => e.Nik).FirstOrDefault()?.Nik ?? null;

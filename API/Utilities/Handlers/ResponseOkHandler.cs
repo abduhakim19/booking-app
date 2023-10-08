@@ -9,11 +9,11 @@ namespace API.Utilities.Handlers
         public string Message {  get; set; }
         public TEntity? Data { get; set; }
 
-        public ResponseOkHandler(TEntity? data)
+        public ResponseOkHandler(string message, TEntity? data)
         {
             Code = StatusCodes.Status200OK;
             Status = HttpStatusCode.OK.ToString();
-            Message = "Success to retrieve data";
+            Message = message;
             Data = data;
         }
 

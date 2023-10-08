@@ -1,25 +1,32 @@
 ﻿using API.Contracts;
+using API.DTOs.Bookings;
 using API.DTOs.Rooms;
 using API.Models;
 using API.Repositories;
+using API.Utilites.Enums;
 using API.Utilities.Handlers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.Xml.Linq;
 
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")] //alamat url
+    [Route("api/rooms")] //alamat url
     public class RoomController : ControllerBase
     {
         private readonly IRoomRepository _roomRepository;
+        private readonly IBookingRepository _bookingRepository;
         // Inisialisasi untuk IRoomRepository (Contructor)
-        public RoomController(IRoomRepository roomRepository)
+        public RoomController(IRoomRepository roomRepository, IBookingRepository bookingRepository)
         {
             _roomRepository = roomRepository;
+            _bookingRepository = bookingRepository;
         }
         // Controller Get untuk mendapatkan semua data Room
         [HttpGet] //http method
+        [Authorize(Roles = "admin")] // hanya admin
         public IActionResult GetAll()  
         {
             try
@@ -32,7 +39,7 @@ namespace API.Controllers
 
                 var data = result.Select(x => (RoomDto)x);
 
-                return Ok(new ResponseOkHandler<IEnumerable<RoomDto>>(data));
+                return Ok(new ResponseOkHandler<IEnumerable<RoomDto>>("Success to retrieve data", data));
             }
             catch (NotFoundHandler ex)
             {
@@ -46,7 +53,8 @@ namespace API.Controllers
             }
         }
         // Controller Get Berdasarkan Guid /api/Room/{guid}
-        [HttpGet("guid")] //http method
+        [HttpGet("{guid}")] //http method
+        [Authorize(Roles = "admin")] //hany admin
         public IActionResult GetByGuid(Guid guid) 
         { 
             try
@@ -57,7 +65,7 @@ namespace API.Controllers
                     throw new NotFoundHandler("Data Not Found"); // throw ke NotFoundHandler
                 }
 
-                return Ok(new ResponseOkHandler<RoomDto>((RoomDto)result));
+                return Ok(new ResponseOkHandler<RoomDto>("Success to retrieve data", (RoomDto)result));
             }
             catch (NotFoundHandler ex)
             {
@@ -69,11 +77,37 @@ namespace API.Controllers
                     Message = ex.Message
                 });
             }
-            
+             
+        }
+        
+        [HttpGet("available")]
+        [Authorize(Roles = "admin, user")] //admin dan user
+        public IActionResult AvailableRooms()
+        {
+            // mendapatkan room yang dibooking
+            var bookings = _bookingRepository.GetBookingByBeetweenStartAndEndDate(DateTime.Today)?
+                .Where(b => b.Status == StatusLevel.OnBooking)
+                .ToList();
+
+            if (!bookings.Any())
+            {
+                throw new NotFoundHandler("Data Not Found");
+            }
+            // mendapatakan data room
+            var rooms = _roomRepository.GetAll().ToList();
+            //looping booking
+            foreach (var booking in bookings)
+            {   // menghapus room yang di booking
+                rooms.RemoveAll(r => booking.RoomGuid == r.Guid);
+            }
+            var data = rooms.Select(x => (RoomDto) x);
+            //return
+            return Ok(new ResponseOkHandler<IEnumerable<RoomDto>>("Success to retrieve data", data));
         }
 
         // Menginput Data Room
         [HttpPost]  // http method
+        [Authorize(Roles = "admin")] // hanya admin
         public IActionResult Create(CreateRoomDto createRoomDto)
         {   
             try
@@ -81,7 +115,7 @@ namespace API.Controllers
                 // menambah data room
                 var result = _roomRepository.Create(createRoomDto);
 
-                return Ok(new ResponseOkHandler<RoomDto>((RoomDto)result));
+                return Ok(new ResponseOkHandler<RoomDto>("Success to create data", (RoomDto)result));
             }
             catch (ExceptionHandler ex)
             {
@@ -95,6 +129,7 @@ namespace API.Controllers
         }
         // Mengupdate Data Room
         [HttpPut] // http method
+        [Authorize(Roles = "admin")] //hanya admin
         public IActionResult Update(RoomDto roomDto)
         {
             try
@@ -135,6 +170,7 @@ namespace API.Controllers
         }
         // Menghapus Data Room
         [HttpDelete] // http method
+        [Authorize(Roles = "admin")] //hanya admin
         public IActionResult Delete(Guid guid) 
         { 
             try

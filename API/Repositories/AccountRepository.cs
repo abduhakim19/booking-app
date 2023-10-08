@@ -18,64 +18,43 @@ namespace API.Repositories
            _context = context;
         }
 
-        public EmployeeAndAccountDto? GetEmployeeAndAccountByEmail(string email)
+        public Employee? GetEmployeeAndAccountByEmail(string email)
         {   // Get employee and account by email
             var employeeAccount = _context.Set<Employee>()
-                .Join(_context.Accounts, e => e.Guid, a => a.Guid, (e, a) => new EmployeeAndAccountDto
+                .Join(_context.Accounts, e => e.Guid, a => a.Guid, (e, a) => new Employee
             {
                Guid = e.Guid,
                Email = e.Email,
                FirstName = e.FirstName,
                LastName = e.LastName,
                Nik = e.Nik,
-               Otp = a.Otp,
-               Password = a.Password,
-               IsUsed = a.IsUsed,
-               ExpiredTime = a.ExpiredTime
+               Account = new Account
+               {
+                   Otp = a.Otp,
+                   Password = a.Password,
+                   IsUsed = a.IsUsed,
+                   ExpiredTime = a.ExpiredTime
+               }
             })
                     .Where(x => x.Email == email)
                     .FirstOrDefault();
             return employeeAccount;
         }
         // melakukan register ke database
-        public CreateRegisterDto? Register(CreateRegisterDto registerDto, Guid universityGuid, string nik) 
+        public Employee? Register(Employee employee) 
         {
             var transaction = _context.Database.BeginTransaction(); // transaction
             try
-            {   // menimpan data berdasarkan objek yang berelasi di ef core
-                var insert = new Employee
-                    {
-                        FirstName = registerDto.FirstName,
-                        LastName = registerDto.LastName,
-                        BirthDate = registerDto.BirthDate,
-                        Gender = registerDto.Gender,
-                        HiringDate = registerDto.HiringDate,
-                        Email = registerDto.Email,
-                        Nik = nik,
-                        PhoneNumber = registerDto.PhoneNumber,
-                        CreatedDate = DateTime.Now,
-                        ModifiedDate = DateTime.Now,
-                        Education = new CreateEducationDto()
-                        {
-                            Major = registerDto.Major,
-                            Degree = registerDto.Degree,
-                            Gpa = registerDto.Gpa,
-                            UniversityGuid = universityGuid
-                        },
-                        Account = new CreateAccountDto()
-                        {
-                            Password = registerDto.Password
-                        }
-                    };
-                    _context.AddRange(insert); //simpan data
-                    _context.SaveChanges();
-
-
-                    transaction.Commit();
-                    return registerDto;
+            {
+                _context.AddRange(employee); //simpan data
+                _context.SaveChanges(); // rollback automation
+                
+                transaction.Commit();
+                return employee;
 
             } catch (Exception ex)
             {
+                transaction.Rollback();
                 throw new ExceptionHandler(ex.Message);
             }
         }

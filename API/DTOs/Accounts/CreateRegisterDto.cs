@@ -1,4 +1,5 @@
-﻿using API.DTOs.Universities;
+﻿using API.DTOs.AccountRoles;
+using API.DTOs.Universities;
 using API.Models;
 using API.Utilites.Enums;
 
@@ -19,6 +20,7 @@ namespace API.DTOs.Accounts
         public string UniversityCode { get; set; }
         public string UniversityName { get; set; }
         public string Password { get; set; }
-        public string NewPasword { get; set; }
+        public string ConfirmPassword { get; set; }
+        public ICollection<string> Roles { get; set; }
     }
 }

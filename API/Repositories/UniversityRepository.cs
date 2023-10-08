@@ -8,11 +8,7 @@ namespace API.Repositories
 {   // class UniversityRepository inheritance interface IUniversityRepository
     public class UniversityRepository : GeneralRepository<University>, IUniversityRepository
     {
-        private readonly BookingManagementDbContext _context;
-        public UniversityRepository(BookingManagementDbContext context) : base(context)
-        {
-            _context = context;
-        }
+        public UniversityRepository(BookingManagementDbContext context) : base(context) { }
 
         public University? GetUniversityByCode(string code)
         {

@@ -1,40 +1,42 @@
 ﻿using API.Contracts;
-using API.Data;
+using API.DTOs.AccountRoles;
 using API.DTOs.Accounts;
 using API.DTOs.Educations;
-using API.DTOs.Employees;
-using API.DTOs.Universities;
 using API.Models;
-using API.Repositories;
 using API.Utilities.Handlers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.Security.Claims;
 
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")] //alamat url
+    [Route("api/accounts")] //alamat url
+    [Authorize(Roles = "admin")]
     public class AccountController : ControllerBase
     {
-        private readonly BookingManagementDbContext _dbContext;
         private readonly IAccountRepository _accountRepository;
         private readonly IEmployeeRepository _employeeRepository;
         private readonly IUniversityRepository _universityRepository;
-        private readonly IEducationRepository _educationRepository;
+        private readonly IRoleRepository _roleRepository;
+        private readonly IAccountRoleRepository _accountRoleRepository;
         private readonly IEmailHandler _emailHandler;
+        private readonly ITokenHandler _tokenHandler;
         // Inisialisasi untuk IAccountRepository (Contructor)
-        public AccountController(IAccountRepository accountRepository, IEmployeeRepository employeeRepository, IUniversityRepository universityRepository, IEducationRepository educationRepository, IEmailHandler emailHandler,BookingManagementDbContext dbContext)
+        public AccountController(IAccountRepository accountRepository, IEmployeeRepository employeeRepository, IUniversityRepository universityRepository, IEmailHandler emailHandler, IAccountRoleRepository accountRoleRepository, IRoleRepository roleRepository, ITokenHandler tokenHandler)
         {
             _accountRepository = accountRepository;
             _employeeRepository = employeeRepository;
             _universityRepository = universityRepository;
-            _educationRepository = educationRepository;
+            _roleRepository = roleRepository;
+            _accountRoleRepository = accountRoleRepository;
             _emailHandler = emailHandler;
-            _dbContext = dbContext;
+            _tokenHandler = tokenHandler;
         }
         // Controller Get untuk mendapatkan semua data Account
         [HttpGet] //http method
-        public IActionResult GetAll() 
+        public IActionResult GetAll()
         {
             try
             {
@@ -46,7 +48,7 @@ namespace API.Controllers
 
                 var data = result.Select(x => (AccountDto)x);
 
-                return Ok(new ResponseOkHandler<IEnumerable<AccountDto>>(data));
+                return Ok(new ResponseOkHandler<IEnumerable<AccountDto>>("Success to retrieve data", data));
             }
             catch (NotFoundHandler ex)
             {
@@ -61,8 +63,8 @@ namespace API.Controllers
         }
 
         // Controller Get Berdasarkan Guid /api/Account/{guid}
-        [HttpGet("guid")] //http method
-        public IActionResult GetByGuid(Guid guid) 
+        [HttpGet("{guid}")] //http method
+        public IActionResult GetByGuid(Guid guid)
         {
             try
             {
@@ -72,7 +74,7 @@ namespace API.Controllers
                     throw new NotFoundHandler("Data Not Found"); // throw ke NotFoundHandler
                 }
 
-                return Ok(new ResponseOkHandler<AccountDto>((AccountDto)result));
+                return Ok(new ResponseOkHandler<AccountDto>("Success to retrieve data", (AccountDto)result));
             }
             catch (NotFoundHandler ex)
             {
@@ -97,7 +99,7 @@ namespace API.Controllers
 
                 var result = _accountRepository.Create(toCreate);
 
-                return Ok(new ResponseOkHandler<AccountDto>((AccountDto) result));
+                return Ok(new ResponseOkHandler<AccountDto>("Success to create data", (AccountDto)result));
             }
             catch (ExceptionHandler ex)
             {
@@ -111,6 +113,7 @@ namespace API.Controllers
         }
         //endpoint untuk forgot password
         [HttpPost("forgot-password")]
+        [AllowAnonymous]
         public IActionResult ForgotPassword(string email)
         {
             try
@@ -162,6 +165,7 @@ namespace API.Controllers
         }
         // Endpoint untuk register
         [HttpPost("register")]
+        [AllowAnonymous]
         public IActionResult Register(CreateRegisterDto createRegisterDto)
         {
             try
@@ -169,29 +173,64 @@ namespace API.Controllers
                 string nik = GenerateHandler.Nik(_employeeRepository.GetLastNik());
                 // mendapatkan university berdasarkan code
                 var university = _universityRepository.GetUniversityByCode(createRegisterDto.UniversityCode);
+
                 // Cek Jika Kosong buat baru
-                Guid universityGuid;
                 if (university is null)
                 {
-                    var universityDto = new UniversityDto
+                    var createUniversity = new University
                     {
                         Code = createRegisterDto.UniversityCode,
                         Name = createRegisterDto.UniversityName
                     };
-                    var result = _universityRepository.Create(universityDto);
-                    UniversityDto getUniversity = (UniversityDto) result;
-                    universityGuid = result.Guid;
-                }else
-                {
-                    universityGuid = university.Guid;
+                    university = _universityRepository.Create(createUniversity);
                 }
-                CreateRegisterDto registerDto = createRegisterDto;
-                // Hashing Password
-                registerDto.Password = HashingHandler.HashPassword(registerDto.Password);
+                // Buat Guid
+                var guid = Guid.NewGuid();
+                // Mendapatkan Role Guid
+                var createAccountRole = new List<AccountRole>();
+                foreach (var role in createRegisterDto.Roles)
+                {
+                    var getRole = _roleRepository.GetByName(role);
+                    if (getRole != null)
+                    {
+                        createAccountRole.Add(new AccountRoleDto
+                        {
+                            AccountGuid = guid,
+                            RoleGuid = getRole.Guid,
+                        });
+                    }
+                }
+                // inisialisasi data untuk register
+                var toCreate = new Employee
+                {
+                    Guid = guid,
+                    FirstName = createRegisterDto.FirstName,
+                    LastName = createRegisterDto.LastName,
+                    BirthDate = createRegisterDto.BirthDate,
+                    Gender = createRegisterDto.Gender,
+                    HiringDate = createRegisterDto.HiringDate,
+                    Email = createRegisterDto.Email,
+                    Nik = nik,
+                    PhoneNumber = createRegisterDto.PhoneNumber,
+                    Education = new CreateEducationDto()
+                    {
+                        Major = createRegisterDto.Major,
+                        Degree = createRegisterDto.Degree,
+                        Gpa = createRegisterDto.Gpa,
+                        UniversityGuid = university.Guid,
+                    },
+                    Account = new Account()
+                    {
+                        Password = HashingHandler.HashPassword(createRegisterDto.Password),
+                        AccountRoles = createAccountRole,
+                        CreatedDate = DateTime.Now,
+                        ModifiedDate = DateTime.Now
+                    }
+                };
                 // register data
-                var register = _accountRepository.Register(registerDto, universityGuid, nik);
+                var register = _accountRepository.Register(toCreate);
 
-                return Ok(new ResponseOkHandler<RegisterDto>((RegisterDto) register));
+                return Ok(new ResponseOkHandler<RegisterDto>("Success to Register", (RegisterDto)register));
             }
             catch (ExceptionHandler ex) // catchh ExceptionHanlder dari repository jika error
             {   // Return reponse dengan 500 internal ServerError
@@ -205,13 +244,14 @@ namespace API.Controllers
         }
         // Endpoint untuk login
         [HttpPost("login")]
+        [AllowAnonymous]
         public IActionResult Login(LoginDto loginDto)
         {
             try
             {   // Mendapatkan email dan password by email
                 var result = _accountRepository.GetEmployeeAndAccountByEmail(loginDto.Email);
                 // cek data kosong atau password tidak sama
-                bool checkLogin = ((result is null) || !HashingHandler.verivyPassword(loginDto.Password, result.Password));
+                bool checkLogin = ((result is null) || !HashingHandler.verivyPassword(loginDto.Password, result.Account.Password));
                 if (checkLogin)
                 {   // return 401
                     return BadRequest(new ResponseErrorHandler
@@ -222,7 +262,21 @@ namespace API.Controllers
                     });
                 }
                 // return login success
-                return Ok(new ResponseOkHandler<object>("Login Success"));
+                var claims = new List<Claim>();
+                claims.Add(new Claim("Email", result.Email));
+                claims.Add(new Claim("FullName", string.Concat(result.FirstName + " " + result.LastName)));
+
+                //get role name
+                var guidRoles = _accountRoleRepository.GetRoleGuidByAccountGuid(result.Guid);
+                // looping untuk role name untuk dimasukkan ke payload
+                foreach (var roleGuid in guidRoles)
+                {
+                    var role = _roleRepository.GetByGuid(roleGuid);
+                    claims.Add(new Claim(ClaimTypes.Role, role.Name));
+                }
+
+                var generateToken = _tokenHandler.GenerateToken(claims);
+                return Ok(new ResponseOkHandler<object>("Login Success", new { Token = generateToken }));
             }
             catch (ExceptionHandler ex) // catchh ExceptionHanlder dari repository jika error
             {   // Return reponse dengan 500 internal ServerError
@@ -277,19 +331,20 @@ namespace API.Controllers
         }
         // mengubah password
         [HttpPut("change-password")]
+        [AllowAnonymous]
         public IActionResult ChangePassword(CreateChangePasswordDto changePasswordDto)
         {
             try
             {   // mendapatkan employee dan account sesuai email
                 var employeeAndAccount = _accountRepository.GetEmployeeAndAccountByEmail(changePasswordDto.Email);
                 // cek data kosong atau Otp beda
-                bool checkLogin = ((employeeAndAccount is null) || (employeeAndAccount.Otp != changePasswordDto.Otp));
+                bool checkLogin = ((employeeAndAccount is null) || (employeeAndAccount.Account.Otp != changePasswordDto.Otp));
                 if (checkLogin)
                 {
                     throw new NotFoundHandler("Otp Not Found");
                 }
                 // sudah digunakan atau belum
-                if (employeeAndAccount.IsUsed)
+                if (employeeAndAccount.Account.IsUsed)
                 {
                     return BadRequest(new ResponseErrorHandler
                     {
@@ -298,7 +353,7 @@ namespace API.Controllers
                         Message = "Otp has been used"
                     });
                 } // melebihi 5 menit
-                if ( DateTime.Now > employeeAndAccount.ExpiredTime)
+                if (DateTime.Now > employeeAndAccount.Account.ExpiredTime)
                 {
                     return BadRequest(new ResponseErrorHandler
                     {

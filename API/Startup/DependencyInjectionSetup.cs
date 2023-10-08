@@ -4,6 +4,7 @@ using API.Utilities.Handlers;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.OpenApi.Models;
 using System.Reflection;
 
 namespace API.Startup
@@ -30,6 +31,7 @@ namespace API.Startup
             services.AddScoped<IRoomRepository, RoomRepository>();
             // Menginstance EmployeeRepository dan IEmployeeRepository
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+            services.AddScoped<ITokenHandler, TokenHandler>();
 
             services.AddControllers()
                 .ConfigureApiBehaviorOptions(options =>
@@ -46,6 +48,37 @@ namespace API.Startup
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
+            services.AddSwaggerGen(x => {
+                x.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Version = "v1",
+                    Title = "Metrodata Coding Camp",
+                    Description = "ASP.NET Core API 6.0"
+                });
+                x.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "Bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "JWT Authorization header using the Bearer scheme."
+                });
+                x.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "Bearer"
+                    }
+                },
+                new string[] { }
+                }
+            });
+            });
             // inisialisai untuk menambahkan fluentvalidator
             services.AddFluentValidationAutoValidation()
                 .AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());

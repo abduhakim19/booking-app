@@ -1,5 +1,6 @@
 ﻿using API.DTOs.Accounts;
 using API.Models;
+using API.Utilites.Enums;
 
 namespace API.DTOs.Bookings
 {
@@ -8,6 +9,7 @@ namespace API.DTOs.Bookings
         public Guid Guid { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
+        public StatusLevel Status {  get; set; }
         public string Remarks { get; set; }
         public Guid RoomGuid { get; set; }
         public Guid EmployeeGuid { get; set; }
@@ -21,6 +23,7 @@ namespace API.DTOs.Bookings
                 StartDate = booking.StartDate,
                 EndDate = booking.EndDate,
                 Remarks = booking.Remarks,
+                Status = booking.Status,
                 RoomGuid = booking.RoomGuid,
                 EmployeeGuid = booking.EmployeeGuid,
             };
@@ -34,6 +37,7 @@ namespace API.DTOs.Bookings
                 StartDate = bookingDto.StartDate,
                 EndDate = bookingDto.EndDate,
                 Remarks = bookingDto.Remarks,
+                Status = bookingDto.Status,
                 RoomGuid = bookingDto.RoomGuid,
                 EmployeeGuid = bookingDto.EmployeeGuid,
             };
